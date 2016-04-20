@@ -128,6 +128,7 @@
                 android:password="false"
                 android:gravity="center_horizontal" />
 
+
         </RelativeLayout>
 
         <fragment
@@ -150,6 +151,18 @@
             android:focusableInTouchMode="false"
             android:textStyle="normal"
             android:password="false" />
+        <Button
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Alert dialog"
+            android:id="@+id/button"
+            android:layout_below="@+id/imageView"
+            android:layout_alignRight="@+id/textView2"
+            android:layout_alignEnd="@+id/textView2"
+            android:layout_marginTop="42dp"
+            android:onClick="open"
+            android:layout_alignLeft="@+id/imageView"
+            android:layout_alignStart="@+id/imageView" />
         <View
             android:layout_below="@+id/steps_in_last_hour"
             android:layout_width="match_parent"
@@ -175,6 +188,7 @@
             android:password="false"
             android:gravity="center_horizontal"
             android:textSize="24pt" />
+
 
     </LinearLayout>
 

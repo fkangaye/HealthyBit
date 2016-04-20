@@ -1,6 +1,7 @@
 package com.mbientlab.activitytracker.db;
 
 import android.content.Context;
+import android.util.Log;
 
 import com.mbientlab.activitytracker.model.ActivitySampleContract;
 
@@ -26,5 +27,6 @@ public class ActivitySampleDbHelper extends DbHelper{
     public ActivitySampleDbHelper(Context context) {
         super(context, DATABASE_NAME, null, DATABASE_VERSION, SQL_CREATE_ENTRIES, SQL_DELETE_ENTRIES);
     }
+
 
 }

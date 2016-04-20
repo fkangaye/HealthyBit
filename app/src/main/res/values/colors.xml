@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <color name="ColorPrimary">#ffe17e00</color>
-    <color name="ColorPrimaryDark">#ffbe6000</color>
+    <color name="ColorPrimary">@color/material_deep_teal_200</color>
+    <color name="ColorPrimaryDark">@color/material_deep_teal_500</color>
     <color name="ColorControlNormal">#ffbe6000</color>
 </resources>

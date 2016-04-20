@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">Activity Tracker</string>
+    <string name="app_name">HEALTHYBIT</string>
     <string name="text_rssi_visual">Visual interpretation of the RSSI value</string>
     <string name="steps"> Steps</string>
     <string name="label_scan">Scan</string>

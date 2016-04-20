@@ -114,6 +114,32 @@ public class MainActivity extends ActionBarActivity implements ScannerCallback, 
 
     }
 
+    //Alert Dialog
+
+    public void open(View view){
+        AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(this);
+        alertDialogBuilder.setMessage("Time To Stand Up!!!!");
+
+        alertDialogBuilder.setPositiveButton("Okay", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface arg0, int arg1) {
+                Toast.makeText(MainActivity.this,"Good Job!!!",Toast.LENGTH_LONG).show();
+            }
+        });
+
+        alertDialogBuilder.setNegativeButton("Snooze",new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                Toast.makeText(MainActivity.this,"S",Toast.LENGTH_LONG).show();
+                //finish();
+            }
+        });
+
+        AlertDialog alertDialog = alertDialogBuilder.create();
+        alertDialog.show();
+    }
+    //
+
     @Override
     protected void onResume(){
         super.onResume();

@@ -158,8 +158,9 @@ public class GraphFragment extends Fragment {
                 Long milliG = activitySampleCursor.getLong(activitySampleCursor.getColumnIndex(ActivitySampleContract.ActivitySampleEntry.COLUMN_NAME_MILLIG));
                 activitySamples[i].setDate(date);
                 activitySamples[i].setTotalMilliG(milliG);
-                Log.i("GraphFragment data time ", date);
-                Log.i("GraphFragment data value ", String.valueOf(milliG));
+                Log.i(date, "test");
+                //Log.i("GraphFragment data time ",date);
+                //Log.i("GraphFragment data value ", String.valueOf(milliG));
             }
             activitySampleCursor.close();
         }

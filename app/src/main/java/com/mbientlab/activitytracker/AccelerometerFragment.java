@@ -33,6 +33,7 @@ import java.util.TimeZone;
 
 
 public class AccelerometerFragment extends Fragment {
+    String message = "HeathyBit Accelerometer";
     private Accelerometer accelCtrllr;
     private Logging loggingCtrllr;
     private DataProcessor dataProcessorController;
@@ -58,6 +59,7 @@ public class AccelerometerFragment extends Fragment {
     public void onResume(){
         super.onResume();
         accelerometerCallback = (AccelerometerCallback) getActivity();
+        Log.d(message, "The onResume() event");
     }
 
     private final DataProcessor.Callbacks dpCallbacks = new DataProcessor.Callbacks() {
