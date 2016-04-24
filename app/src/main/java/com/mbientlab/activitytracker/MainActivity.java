@@ -130,7 +130,7 @@ public class MainActivity extends ActionBarActivity implements ScannerCallback, 
         alertDialogBuilder.setNegativeButton("Snooze",new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
-                Toast.makeText(MainActivity.this,"S",Toast.LENGTH_LONG).show();
+                Toast.makeText(MainActivity.this,"See you again next time!!",Toast.LENGTH_LONG).show();
                 //finish();
             }
         });
@@ -185,7 +185,7 @@ public class MainActivity extends ActionBarActivity implements ScannerCallback, 
 
         @Override
         public void disconnected() {
-            Log.i("Metawear Controler", "Device Disconnected");
+            //Log.i("Metawear Controler", "Device Disconnected");
             Toast.makeText(getApplicationContext(), R.string.toast_disconnected, Toast.LENGTH_SHORT).show();
         }
     };
@@ -229,6 +229,7 @@ public class MainActivity extends ActionBarActivity implements ScannerCallback, 
         editor.putString("ble_mac_address", bluetoothDevice.getAddress());
         editor.commit();
         accelerometerFragment.addTriggers(mwController, editor);
+        Log.i("pairDevice", "PairDevice");
     }
 
     public void dontPairDevice(){
@@ -255,7 +256,7 @@ public class MainActivity extends ActionBarActivity implements ScannerCallback, 
         mwService.registerReceiver(MetaWearBleService.getMetaWearBroadcastReceiver(),
                 MetaWearBleService.getMetaWearIntentFilter());
         String bleMacAddress = sharedPreferences.getString("ble_mac_address", null);
-        Log.i("Service Connected", "Stored mac address is " + bleMacAddress);
+        //Log.i("Service Connected", "Stored mac address is " + bleMacAddress);
         if(bleMacAddress != null){
             bluetoothDevice = btAdapter.getRemoteDevice(bleMacAddress);
             connectDevice(bluetoothDevice);
@@ -426,7 +427,7 @@ public class MainActivity extends ActionBarActivity implements ScannerCallback, 
                 DateFormat outputDateFormat = new SimpleDateFormat("MMM dd, yyyy   HH:mm");
                 formattedDate = outputDateFormat.format(date);
             } catch (ParseException pe){
-                Log.i("MainActivity", "Date Parse Exception OnValueSelected " + pe.toString());
+                //Log.i("MainActivity", "Date Parse Exception OnValueSelected " + pe.toString());
                 formattedDate = "";
             }
 

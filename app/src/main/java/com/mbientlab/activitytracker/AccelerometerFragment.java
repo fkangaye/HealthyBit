@@ -59,17 +59,20 @@ public class AccelerometerFragment extends Fragment {
     public void onResume(){
         super.onResume();
         accelerometerCallback = (AccelerometerCallback) getActivity();
-        Log.d(message, "The onResume() event");
+        //Log.d(message, "The onResume() event");
     }
 
     private final DataProcessor.Callbacks dpCallbacks = new DataProcessor.Callbacks() {
         @Override
         public void receivedFilterId(byte filterId) {
             byte filterArray[] = {filterId};
+
             if (rmsFilterId == -1) {
                 rmsFilterId = filterId;
                 editor.putString("rmsFilterId", Base64.encodeToString(filterArray, Base64.NO_WRAP));
                 editor.commit();
+                Log.i("Fadila rmsFilterId", Base64.encodeToString(filterArray, Base64.NO_WRAP));
+                System.out.print("Fadila rmsFilterId" +  Base64.encodeToString(filterArray, Base64.NO_WRAP));
                 FilterConfig accumFilter= new FilterConfigBuilder.AccumulatorBuilder()
                         .withInputSize(LoggingTrigger.ACCELEROMETER_X_AXIS.length())
                         .withOutputSize(ACTIVITY_DATA_SIZE)
@@ -128,16 +131,16 @@ public class AccelerometerFragment extends Fragment {
             Date entryTime = entry.timestamp(refTick).getTime();
 
             if (tId == timeTriggerId) {
-                Log.i("LoggingExample", "Time Trigger Id " + entryTime.toString() + String.valueOf(activityMilliG));//String.format(outputFormat, "Z-Axis", entryTime, Gs));
-                Log.i("ActivityTracker", String.format(Locale.US, "%.3f,%.3f",
-                        entry.offset(firstEntry) / 1000.0, activityMilliG / 1000.0));
+               // Log.i("LoggingExample", "Time Trigger Id " + entryTime.toString() + String.valueOf(activityMilliG));//String.format(outputFormat, "Z-Axis", entryTime, Gs));
+//                Log.i("ActivityTracker", String.format(Locale.US, "%.3f,%.3f",
+//                        entry.offset(firstEntry) / 1000.0, activityMilliG / 1000.0));
                 ContentValues contentValues = new ContentValues();
                 contentValues.put(ActivitySampleContract.ActivitySampleEntry.COLUMN_NAME_MILLIG, activityMilliG);
                 contentValues.put(ActivitySampleContract.ActivitySampleEntry.COLUMN_NAME_SAMPLE_TIME, getDateTime(entryTime));
                 activitySampleDb.insert(ActivitySampleContract.ActivitySampleEntry.TABLE_NAME, null, contentValues);
             } else {
-                Log.i("LoggingExample", String.format("Unkown Trigger ID, (%d, %s)",
-                        tId, Arrays.toString(entry.data())));
+//                Log.i("LoggingExample", String.format("Unkown Trigger ID, (%d, %s)",
+//                        tId, Arrays.toString(entry.data())));
             }
         }
 
@@ -146,22 +149,23 @@ public class AccelerometerFragment extends Fragment {
         public void receivedReferenceTick(ReferenceTick reference) {
             refTick = reference;
 
-            Log.i("LoggingExample", String.format("Received the reference tick = %s, %d", reference, reference.tickCount()));
+            //Log.i("LoggingExample", String.format("Received the reference tick = %s, %d", reference, reference.tickCount()));
             // Got the reference tick, make lets get
             // the log entry count
             loggingCtrllr.readTotalEntryCount();
+
         }
 
         @Override
         public void receivedTriggerId(byte triggerId) {
             byte triggerArray[] = {triggerId};
             timeTriggerId = triggerId;
-            editor.putString("timeTriggerId", Base64.encodeToString(triggerArray, Base64.NO_WRAP));
-            editor.commit();
+            //editor.putString("timeTriggerId", Base64.encodeToString(triggerArray, Base64.NO_WRAP));
+            //editor.commit();
             startLog();
-            Log.i("receivedTrigger", "Received trigger id " + String.valueOf(triggerId));
-            Log.i("encoded trigger", Base64.encodeToString(triggerArray, Base64.NO_WRAP));
-            Log.i("decoded trigger", String.valueOf(Base64.decode(Base64.encodeToString(triggerArray, Base64.NO_WRAP), Base64.NO_WRAP)[0]));
+            //Log.i("receivedTrigger", "Received trigger id " + String.valueOf(triggerId));
+            //Log.i("encoded trigger", Base64.encodeToString(triggerArray, Base64.NO_WRAP));
+            //Log.i("decoded trigger", String.valueOf(Base64.decode(Base64.encodeToString(triggerArray, Base64.NO_WRAP), Base64.NO_WRAP)[0]));
         }
 
         @Override
@@ -169,7 +173,7 @@ public class AccelerometerFragment extends Fragment {
             if (!isDownloading && (totalEntries > 0)) {
                 totalEntryCount = totalEntries;
                 isDownloading = true;
-                Log.i("LoggingExample", "Download begin");
+                //Log.i("LoggingExample", "Download begin");
 
                 //Got the entry count, lets now download the log
                 loggingCtrllr.downloadLog(totalEntries, (int) (totalEntries * notifyRatio));
@@ -182,16 +186,16 @@ public class AccelerometerFragment extends Fragment {
 
         @Override
         public void receivedDownloadProgress(int nEntriesLeft) {
-            Log.i("LoggingExample", String.format("Entries remaining= %d", nEntriesLeft));
+            //Log.i("LoggingExample", String.format("Entries remaining= %d", nEntriesLeft));
             accelerometerCallback.downloadProgress(totalEntryCount - nEntriesLeft);
         }
 
         @Override
         public void downloadCompleted() {
             isDownloading = false;
-            Log.i("removing ", String.valueOf((short)totalEntryCount) + " entries");
+            //Log.i("removing ", String.valueOf((short)totalEntryCount) + " entries");
             loggingCtrllr.removeLogEntries((short) totalEntryCount);
-            Log.i("LoggingExample", "Download completed");
+            //Log.i("LoggingExample", "Download completed");
             mwController.waitToClose(false);
             GraphFragment graphFragment = accelerometerCallback.getGraphFragment();
             graphFragment.updateGraph();
@@ -204,7 +208,7 @@ public class AccelerometerFragment extends Fragment {
         String accumFilterString = sharedPreferences.getString("accumFilterId", null);
         String timeFilterString = sharedPreferences.getString("timeFilterId", null);
         String timeTriggerString = sharedPreferences.getString("timeTriggerId", null);
-        Log.i("Accelerometer", "Time Trigger Id is " + timeTriggerString);
+        //Log.i("Accelerometer", "Time Trigger Id is " + timeTriggerString);
 
         if((rmsFilterString != null) && (timeFilterString != null) && (timeTriggerString != null)) {
             rmsFilterId = Base64.decode(rmsFilterString, Base64.NO_WRAP)[0];
@@ -212,7 +216,7 @@ public class AccelerometerFragment extends Fragment {
             timeFilterId = Base64.decode(timeFilterString, Base64.NO_WRAP)[0];
             timeTriggerId = Base64.decode(timeTriggerString, Base64.NO_WRAP)[0];
         }
-        Log.i("Accelerometer", "Time Trigger Id is " + String.valueOf(timeTriggerId) );
+        //Log.i("Accelerometer", "Time Trigger Id is " + String.valueOf(timeTriggerId) );
     }
 
     public void removeTriggers(Editor editor) {
@@ -247,10 +251,11 @@ public class AccelerometerFragment extends Fragment {
         setupLogginController(mwController);
 
         FilterConfig rms= new FilterConfigBuilder.RMSBuilder().withInputCount((byte) 3)
-                .withSignedInput().withOutputSize(LoggingTrigger.ACCELEROMETER_X_AXIS.length())
-                .withInputSize(LoggingTrigger.ACCELEROMETER_X_AXIS.length())
+                .withSignedInput().withOutputSize(LoggingTrigger.ACCELEROMETER_Z_AXIS.length())
+                .withInputSize(LoggingTrigger.ACCELEROMETER_Z_AXIS.length())
                 .build();
 
+        Log.i("Add Trigger","Test");
         dataProcessorController.addFilter(accelerometerTrigger, rms);
 
         final Accelerometer accelCtrllr= (Accelerometer) mwController.getModuleController(Module.ACCELEROMETER);
@@ -258,6 +263,7 @@ public class AccelerometerFragment extends Fragment {
                 .withHighPassFilter((byte) 0).withOutputDataRate(SamplingConfig.OutputDataRate.ODR_100_HZ)
                 .withSilentMode();
         accelCtrllr.startComponents();
+
     }
 
     private void startLog() {
@@ -267,6 +273,7 @@ public class AccelerometerFragment extends Fragment {
         samplingConfig.withFullScaleRange(SamplingConfig.FullScaleRange.FSR_8G)
                 .withOutputDataRate(SamplingConfig.OutputDataRate.ODR_100_HZ)
                 .withSilentMode();
+        Log.i("StartLog()","StartLog()");
 
         accelCtrllr.startComponents();
     }
@@ -303,7 +310,7 @@ public class AccelerometerFragment extends Fragment {
         this.activitySampleDb = activitySampleDb;
         this.mwController = mwController;
         setupLogginController(mwController);
-        Log.i("LoggingExample", String.format("Starting Log Download"));
+        //Log.i("LoggingExample", String.format("Starting Log Download"));
         loggingCtrllr.readReferenceTick();
         accelerometerCallback.startDownload();
     }

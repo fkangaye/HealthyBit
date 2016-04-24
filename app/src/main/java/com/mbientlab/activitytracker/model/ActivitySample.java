@@ -23,12 +23,11 @@ public class ActivitySample {
 
     public void setDate(String date) {
         Calendar calendar = Calendar.getInstance();
-        int seconds = calendar.get(Calendar.SECOND);
-        Log.d(String.valueOf(seconds), "date in second");
-        Date date1 = new Date();
+        //int seconds = calendar.get(Calendar.SECOND);
+        //Log.d( "date in second",String.valueOf(seconds));
 
         this.date = date;
-        Log.d(date, "test");
+        //Log.d(date, "test");
     }
 
     public Long getTotalMilliG() {
@@ -42,8 +41,8 @@ public class ActivitySample {
             Log.d(String.valueOf(steps), "total steps");
             calories = (int) (steps * CALORIES_PER_STEP);
         } else {
-            steps = 0;
-            calories = 0;
+            steps = 10;
+            calories = 20;
         }
     }
 

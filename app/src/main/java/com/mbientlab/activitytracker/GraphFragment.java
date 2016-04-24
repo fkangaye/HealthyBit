@@ -158,7 +158,7 @@ public class GraphFragment extends Fragment {
                 Long milliG = activitySampleCursor.getLong(activitySampleCursor.getColumnIndex(ActivitySampleContract.ActivitySampleEntry.COLUMN_NAME_MILLIG));
                 activitySamples[i].setDate(date);
                 activitySamples[i].setTotalMilliG(milliG);
-                Log.i(date, "test");
+                //Log.i(date, "test");
                 //Log.i("GraphFragment data time ",date);
                 //Log.i("GraphFragment data value ", String.valueOf(milliG));
             }
@@ -179,11 +179,11 @@ public class GraphFragment extends Fragment {
             totalCalories += activitySamples[j].getCalories();
             totalSteps += activitySamples[j].getSteps();
             entries.add(new BarEntry(activitySamples[j].getSteps(), j));
-            Log.i("GraphFragment", "Total MilliG prev: " + activitySamples[j-1].getTotalMilliG());
-            Log.i("GraphFragment", "Total MilliG: " + activitySamples[j].getTotalMilliG());
-            Log.i("GraphFragment", "Individual MilliG: " + activitySamples[j].getIndividualMilliG());
-            Log.i("GraphFragment", "Steps: " + activitySamples[j].getSteps());
-            Log.i("GraphFragment", "Calories: " + activitySamples[j].getCalories());
+//            Log.i("GraphFragment", "Total MilliG prev: " + activitySamples[j-1].getTotalMilliG());
+//            Log.i("GraphFragment", "Total MilliG: " + activitySamples[j].getTotalMilliG());
+//            Log.i("GraphFragment", "Individual MilliG: " + activitySamples[j].getIndividualMilliG());
+//            Log.i("GraphFragment", "Steps: " + activitySamples[j].getSteps());
+//            Log.i("GraphFragment", "Calories: " + activitySamples[j].getCalories());
         }
 
         BarDataSet ds = new BarDataSet(entries, getLabel(0));
