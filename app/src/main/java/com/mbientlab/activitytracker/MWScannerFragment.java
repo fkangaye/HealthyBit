@@ -8,6 +8,7 @@ import android.bluetooth.BluetoothManager;
 import android.content.Context;
 import android.os.Bundle;
 import android.os.Handler;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -142,6 +143,9 @@ public class MWScannerFragment extends DialogFragment {
                 if (isScanning) {
                     stopBleScan();
                 }
+                Log.i("MWSCanFragment", "onCreatedView called "+mLeDeviceListAdapter.getCount());
+
+                //crash at 147 too
                 callback.btDeviceSelected(mLeDeviceListAdapter.getItem(position).device);
                 dismiss();
             }

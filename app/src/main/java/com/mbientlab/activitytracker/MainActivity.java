@@ -14,7 +14,6 @@ import android.content.SharedPreferences;
 import android.content.SharedPreferences.Editor;
 import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
-import android.os.Debug;
 import android.os.IBinder;
 import android.support.v7.app.ActionBarActivity;
 import android.util.Log;
@@ -35,8 +34,13 @@ import com.mbientlab.activitytracker.GraphFragment.GraphCallback;
 import com.mbientlab.activitytracker.MWDeviceConfirmFragment.DeviceConfirmCallback;
 import com.mbientlab.activitytracker.MWScannerFragment.ScannerCallback;
 import com.mbientlab.activitytracker.db.ActivitySampleDbHelper;
+import com.mbientlab.metawear.AsyncOperation;
+import com.mbientlab.metawear.Message;
 import com.mbientlab.metawear.MetaWearBleService;
 import com.mbientlab.metawear.MetaWearBoard;
+import com.mbientlab.metawear.RouteManager;
+import com.mbientlab.metawear.UnsupportedModuleException;
+import com.mbientlab.metawear.data.CartesianFloat;
 import com.mbientlab.metawear.module.Accelerometer;
 
 import java.text.DateFormat;
@@ -49,24 +53,18 @@ import java.util.TimeZone;
 
 public class MainActivity extends ActionBarActivity implements ScannerCallback, ServiceConnection, DeviceConfirmCallback, GraphCallback
 {
-//    private Switch accel_switch;
-//    private Accelerometer accelModule;
-//    private static final float ACC_RANGE = 8.f, ACC_FREQ = 50.f;
-//    private static final String STREAM_KEY = "accel_stream";
-
-    private MetaWearBleService.LocalBinder serviceBinder;
-    private MetaWearBoard mwBoard;
-
-
-
-    private GraphFragment mGraphFragment;
+    private static final float ACC_RANGE = 8.f, ACC_FREQ = 50.f;
+    private static final String STREAM_KEY = "accel_stream";
     private final static int REQUEST_ENABLE_BT= 0;
     private final static String ACCELEROMETER_FRAGMENT_KEY= "com.mbientlab.activitytracker.AccelerometerFragment.ACCELEROMETER_FRAGMENT_KEY";
     private final static String GRAPH_FRAGMENT_KEY = "com.mbientlab.activitytracker.GraphFragment.GRAPH_FRAGMENT_KEY";
-//    private MetaWearBleService mwService= null;
+    private static final String TAG = "METAWEAR";
+    public Accelerometer accelModule;
+    private Switch accel_switch;
+    private MetaWearBleService.LocalBinder serviceBinder;
+    private GraphFragment mGraphFragment;
     private MetaWearBoard metaWearBoard = null;
     private MWScannerFragment mwScannerFragment = null;
-//    private AccelerometerFragment accelerometerFragment = null;
     private SharedPreferences sharedPreferences;
     private Editor editor;
     private BluetoothDevice bluetoothDevice;
@@ -79,17 +77,15 @@ public class MainActivity extends ActionBarActivity implements ScannerCallback, 
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         sharedPreferences = getApplicationContext().getSharedPreferences("com.mbientlab.metatracker", 0); // 0 - for private mode
-//        editor = sharedPreferences.edit();
+        editor = sharedPreferences.edit();
         setContentView(R.layout.activity_main);
 
         if (savedInstanceState == null) {
             PlaceholderFragment mainFragment= new PlaceholderFragment();
 
             getFragmentManager().beginTransaction().add(R.id.container, mainFragment).commit();
-            mGraphFragment = (GraphFragment)
-                    getFragmentManager().findFragmentById(R.id.graph);
+            mGraphFragment = (GraphFragment) getFragmentManager().findFragmentById(R.id.graph);
         } else {
-//            accelerometerFragment = (AccelerometerFragment) getFragmentManager().getFragment(savedInstanceState, ACCELEROMETER_FRAGMENT_KEY);
             mGraphFragment = (GraphFragment) getFragmentManager().getFragment(savedInstanceState, GRAPH_FRAGMENT_KEY);
         }
 
@@ -151,8 +147,6 @@ public class MainActivity extends ActionBarActivity implements ScannerCallback, 
             connectionStatus.setText(getText(R.string.metawear_connected));
         }
 
-
-//        accelerometerFragment = (AccelerometerFragment) getFragmentManager().findFragmentByTag(ACCELEROMETER_FRAGMENT_KEY);
     }
 
     @Override
@@ -167,8 +161,7 @@ public class MainActivity extends ActionBarActivity implements ScannerCallback, 
        activitySampleDb.close();
     }
 
-    private void connectDevice(BluetoothDevice device){
-        metaWearBoard = serviceBinder.getMetaWearBoard(device);
+    public void connectDevice(final MetaWearBoard metaWearBoard){
 
         metaWearBoard.setConnectionStateHandler(new MetaWearBoard.ConnectionStateHandler() {
             @Override
@@ -177,14 +170,16 @@ public class MainActivity extends ActionBarActivity implements ScannerCallback, 
                 Toast.makeText(getApplicationContext(), R.string.toast_connected, Toast
                         .LENGTH_SHORT).show();
 
-//                if(accelerometerFragment != null) {
-//                    accelerometerFragment.restoreState(sharedPreferences);
-//                }
-
                 if (btDeviceSelected) {
-                    MWDeviceConfirmFragment mwDeviceConfirmFragment = new MWDeviceConfirmFragment();
-                    mwDeviceConfirmFragment.flashDeviceLight(metaWearBoard, getFragmentManager());
-                    btDeviceSelected = false;
+                MWDeviceConfirmFragment mwDeviceConfirmFragment = new MWDeviceConfirmFragment();
+                mwDeviceConfirmFragment.flashDeviceLight(metaWearBoard, getFragmentManager());
+                btDeviceSelected = false;
+                 }
+
+                try {
+                    accelModule = metaWearBoard.getModule(Accelerometer.class);
+                } catch (UnsupportedModuleException e) {
+                    e.printStackTrace();
                 }
             }
 
@@ -195,6 +190,7 @@ public class MainActivity extends ActionBarActivity implements ScannerCallback, 
             }
         });
         metaWearBoard.connect();
+
 
 
         if(menu != null) {
@@ -218,17 +214,17 @@ public class MainActivity extends ActionBarActivity implements ScannerCallback, 
 
     @Override
     public void btDeviceSelected(BluetoothDevice device) {
-        Log.i("Connected", "Connected");
+        Log.i("Connected", "Connected"+device.getAddress());
         bluetoothDevice = device;
         btDeviceSelected = true;
-        connectDevice(device);
+        //Error Here
+        //connectDevice(serviceBinder.getMetaWearBoard(bluetoothDevice));
 
     }
 
     public void pairDevice(){
         editor.putString("ble_mac_address", bluetoothDevice.getAddress());
         editor.commit();
-        //accelerometerFragment.addTriggers(metaWearBoard, editor);
         Log.i("pairDevice", "PairDevice");
     }
 
@@ -248,19 +244,17 @@ public class MainActivity extends ActionBarActivity implements ScannerCallback, 
     @Override
     public void onServiceConnected(ComponentName name, IBinder service) {
         serviceBinder = (MetaWearBleService.LocalBinder) service;
-        serviceBinder.executeOnUiThread();
+        //serviceBinder.executeOnUiThread();
 
         String bleMacAddress = sharedPreferences.getString("ble_mac_address", null);
+        Log.i("Log : ble_mac_address", bleMacAddress);
         if(bleMacAddress != null){
-            bluetoothDevice = btAdapter.getRemoteDevice(bleMacAddress);
-            connectDevice(bluetoothDevice);
+        bluetoothDevice = btAdapter.getRemoteDevice(bleMacAddress);
+        metaWearBoard = serviceBinder.getMetaWearBoard(bluetoothDevice);
+        connectDevice(metaWearBoard);
+
         }
     }
-//
-//    @Override
-//    public GraphFragment getGraphFragment(){
-//        return mGraphFragment;
-//    }
 
     @Override
     public void setGraphFragment(GraphFragment graphFragment){
@@ -325,7 +319,6 @@ public class MainActivity extends ActionBarActivity implements ScannerCallback, 
      */
     public static class PlaceholderFragment extends Fragment implements ServiceConnection, OnChartValueSelectedListener{
 
-
         @Override
         public void onServiceConnected(ComponentName componentName, IBinder service) {
 
@@ -333,7 +326,6 @@ public class MainActivity extends ActionBarActivity implements ScannerCallback, 
 
         @Override
         public void onServiceDisconnected(ComponentName name) {
-            //mwService= null;
 
         }
 
@@ -355,6 +347,48 @@ public class MainActivity extends ActionBarActivity implements ScannerCallback, 
                     graphFragment.toggleDemoData(isChecked);
                 }
             });
+
+            //Accelerometer switch
+//            Switch accel_switch = (Switch) rootView.findViewById(R.id.accel_switch);
+//            accel_switch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+//                public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+//                    Log.i("Switch State=", "" + isChecked);
+//                    if (isChecked) {
+//                        if (isChecked) {
+//                            accelModule.setOutputDataRate(ACC_FREQ);
+//                            accelModule.setAxisSamplingRange(ACC_RANGE);
+//                            accelModule.routeData()
+//                                    .fromAxes().stream(STREAM_KEY)
+//                                    .commit().onComplete(new AsyncOperation.CompletionHandler<RouteManager>() {
+//                                @Override
+//                                public void success(RouteManager result) {
+//                                    result.subscribe(STREAM_KEY, new RouteManager.MessageHandler() {
+//                                        @Override
+//                                        public void process(Message message) {
+//                                            CartesianFloat axes = message.getData(CartesianFloat.class);
+//                                            Log.i(TAG, axes.toString());
+//                                        }
+//
+//                                    });
+//                                }
+//
+//                                @Override
+//                                public void failure(Throwable error) {
+//                                    Log.e(TAG, "Error committing route", error);
+//                                }
+//                            });
+//                            accelModule.enableAxisSampling();
+//                            accelModule.start();
+//                        } else {
+//                            accelModule.disableAxisSampling();
+//                            accelModule.stop();
+//                        }
+//                    }
+//                }
+//            });
+//
+//
+//            //
             GraphFragment graphFragment = getGraphFragment();
             graphFragment.getmChart().setOnChartValueSelectedListener(this);
             return rootView;

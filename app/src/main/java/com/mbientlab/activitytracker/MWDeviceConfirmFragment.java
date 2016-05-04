@@ -122,10 +122,10 @@ public class MWDeviceConfirmFragment extends DialogFragment {
                                 Log.e(TAG, "Error committing route", error);
                             }
                         });
-                        accelModule.enableAxisSampling(); //You must enable axis sampling before you can start
+                        accelModule.enableAxisSampling();
                         accelModule.start();
                     } else {
-                        accelModule.disableAxisSampling(); //Likewise, you must first disable axis sampling before stopping
+                        accelModule.disableAxisSampling();
                         accelModule.stop();
                     }
                 }
