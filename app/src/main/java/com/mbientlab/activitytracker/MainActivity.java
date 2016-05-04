@@ -1,6 +1,7 @@
 package com.mbientlab.activitytracker;
 
 import android.app.AlertDialog;
+import android.app.Fragment;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothManager;
@@ -12,10 +13,10 @@ import android.content.ServiceConnection;
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.Editor;
 import android.database.sqlite.SQLiteDatabase;
+import android.os.Bundle;
+import android.os.Debug;
 import android.os.IBinder;
 import android.support.v7.app.ActionBarActivity;
-import android.app.Fragment;
-import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -23,7 +24,6 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.CompoundButton;
-import android.widget.ProgressBar;
 import android.widget.Switch;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -31,15 +31,13 @@ import android.widget.Toast;
 import com.github.mikephil.charting.data.Entry;
 import com.github.mikephil.charting.listener.OnChartValueSelectedListener;
 import com.github.mikephil.charting.utils.Highlight;
-import com.mbientlab.activitytracker.MWScannerFragment.ScannerCallback;
-import com.mbientlab.activitytracker.MWDeviceConfirmFragment.DeviceConfirmCallback;
-import com.mbientlab.activitytracker.db.ActivitySampleDbHelper;
-import com.mbientlab.activitytracker.model.ActivitySampleContract;
-import com.mbientlab.metawear.api.MetaWearBleService;
-import com.mbientlab.metawear.api.MetaWearController;
-import com.mbientlab.metawear.api.Module;
-import com.mbientlab.metawear.api.controller.Debug;
 import com.mbientlab.activitytracker.GraphFragment.GraphCallback;
+import com.mbientlab.activitytracker.MWDeviceConfirmFragment.DeviceConfirmCallback;
+import com.mbientlab.activitytracker.MWScannerFragment.ScannerCallback;
+import com.mbientlab.activitytracker.db.ActivitySampleDbHelper;
+import com.mbientlab.metawear.MetaWearBleService;
+import com.mbientlab.metawear.MetaWearBoard;
+import com.mbientlab.metawear.module.Accelerometer;
 
 import java.text.DateFormat;
 import java.text.ParseException;
@@ -49,20 +47,26 @@ import java.util.Locale;
 import java.util.TimeZone;
 
 
-public class MainActivity extends ActionBarActivity implements ScannerCallback, ServiceConnection, DeviceConfirmCallback, GraphCallback, AccelerometerFragment.AccelerometerCallback
+public class MainActivity extends ActionBarActivity implements ScannerCallback, ServiceConnection, DeviceConfirmCallback, GraphCallback
 {
+//    private Switch accel_switch;
+//    private Accelerometer accelModule;
+//    private static final float ACC_RANGE = 8.f, ACC_FREQ = 50.f;
+//    private static final String STREAM_KEY = "accel_stream";
 
-    /**
-     * Fragment managing the behaviors, interactions and presentation of the navigation drawer.
-     */
+    private MetaWearBleService.LocalBinder serviceBinder;
+    private MetaWearBoard mwBoard;
+
+
+
     private GraphFragment mGraphFragment;
     private final static int REQUEST_ENABLE_BT= 0;
     private final static String ACCELEROMETER_FRAGMENT_KEY= "com.mbientlab.activitytracker.AccelerometerFragment.ACCELEROMETER_FRAGMENT_KEY";
     private final static String GRAPH_FRAGMENT_KEY = "com.mbientlab.activitytracker.GraphFragment.GRAPH_FRAGMENT_KEY";
-    private MetaWearBleService mwService= null;
-    private MetaWearController mwController = null;
+//    private MetaWearBleService mwService= null;
+    private MetaWearBoard metaWearBoard = null;
     private MWScannerFragment mwScannerFragment = null;
-    private AccelerometerFragment accelerometerFragment = null;
+//    private AccelerometerFragment accelerometerFragment = null;
     private SharedPreferences sharedPreferences;
     private Editor editor;
     private BluetoothDevice bluetoothDevice;
@@ -75,18 +79,17 @@ public class MainActivity extends ActionBarActivity implements ScannerCallback, 
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         sharedPreferences = getApplicationContext().getSharedPreferences("com.mbientlab.metatracker", 0); // 0 - for private mode
-        editor = sharedPreferences.edit();
+//        editor = sharedPreferences.edit();
         setContentView(R.layout.activity_main);
 
         if (savedInstanceState == null) {
             PlaceholderFragment mainFragment= new PlaceholderFragment();
-            accelerometerFragment = new AccelerometerFragment();
-            getFragmentManager().beginTransaction().add(R.id.container, mainFragment)
-                    .add(R.id.container, accelerometerFragment, ACCELEROMETER_FRAGMENT_KEY).commit();
+
+            getFragmentManager().beginTransaction().add(R.id.container, mainFragment).commit();
             mGraphFragment = (GraphFragment)
                     getFragmentManager().findFragmentById(R.id.graph);
         } else {
-            accelerometerFragment = (AccelerometerFragment) getFragmentManager().getFragment(savedInstanceState, ACCELEROMETER_FRAGMENT_KEY);
+//            accelerometerFragment = (AccelerometerFragment) getFragmentManager().getFragment(savedInstanceState, ACCELEROMETER_FRAGMENT_KEY);
             mGraphFragment = (GraphFragment) getFragmentManager().getFragment(savedInstanceState, GRAPH_FRAGMENT_KEY);
         }
 
@@ -114,8 +117,6 @@ public class MainActivity extends ActionBarActivity implements ScannerCallback, 
 
     }
 
-    //Alert Dialog
-
     public void open(View view){
         AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(this);
         alertDialogBuilder.setMessage("Time To Stand Up!!!!");
@@ -127,18 +128,18 @@ public class MainActivity extends ActionBarActivity implements ScannerCallback, 
             }
         });
 
-        alertDialogBuilder.setNegativeButton("Snooze",new DialogInterface.OnClickListener() {
+        alertDialogBuilder.setNegativeButton("Snooze", new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
-                Toast.makeText(MainActivity.this,"See you again next time!!",Toast.LENGTH_LONG).show();
-                //finish();
+                Toast.makeText(MainActivity.this, "See you again next time!!", Toast.LENGTH_LONG)
+                        .show();
+                finish();
             }
         });
 
         AlertDialog alertDialog = alertDialogBuilder.create();
         alertDialog.show();
     }
-    //
 
     @Override
     protected void onResume(){
@@ -151,7 +152,7 @@ public class MainActivity extends ActionBarActivity implements ScannerCallback, 
         }
 
 
-        accelerometerFragment = (AccelerometerFragment) getFragmentManager().findFragmentByTag(ACCELEROMETER_FRAGMENT_KEY);
+//        accelerometerFragment = (AccelerometerFragment) getFragmentManager().findFragmentByTag(ACCELEROMETER_FRAGMENT_KEY);
     }
 
     @Override
@@ -166,35 +167,34 @@ public class MainActivity extends ActionBarActivity implements ScannerCallback, 
        activitySampleDb.close();
     }
 
-    private MetaWearController.DeviceCallbacks dCallback= new MetaWearController.DeviceCallbacks() {
-        @Override
-        public void connected() {
-            Log.i("Metawear Controller", "Device Connected");
-            Toast.makeText(getApplicationContext(), R.string.toast_connected, Toast.LENGTH_SHORT).show();
-
-            if(accelerometerFragment != null) {
-                accelerometerFragment.restoreState(sharedPreferences);
-            }
-
-            if(btDeviceSelected) {
-                MWDeviceConfirmFragment mwDeviceConfirmFragment = new MWDeviceConfirmFragment();
-                mwDeviceConfirmFragment.flashDeviceLight(mwController, getFragmentManager());
-                btDeviceSelected = false;
-            }
-        }
-
-        @Override
-        public void disconnected() {
-            //Log.i("Metawear Controler", "Device Disconnected");
-            Toast.makeText(getApplicationContext(), R.string.toast_disconnected, Toast.LENGTH_SHORT).show();
-        }
-    };
-
     private void connectDevice(BluetoothDevice device){
-        mwController = mwService.getMetaWearController(device);
-        mwController.addDeviceCallback(dCallback);
+        metaWearBoard = serviceBinder.getMetaWearBoard(device);
 
-        mwController.connect();
+        metaWearBoard.setConnectionStateHandler(new MetaWearBoard.ConnectionStateHandler() {
+            @Override
+            public void connected() {
+                Log.i("Metawear Controller", "Device Connected");
+                Toast.makeText(getApplicationContext(), R.string.toast_connected, Toast
+                        .LENGTH_SHORT).show();
+
+//                if(accelerometerFragment != null) {
+//                    accelerometerFragment.restoreState(sharedPreferences);
+//                }
+
+                if (btDeviceSelected) {
+                    MWDeviceConfirmFragment mwDeviceConfirmFragment = new MWDeviceConfirmFragment();
+                    mwDeviceConfirmFragment.flashDeviceLight(metaWearBoard, getFragmentManager());
+                    btDeviceSelected = false;
+                }
+            }
+
+            @Override
+            public void disconnected() {
+                Toast.makeText(getApplicationContext(), R.string.toast_disconnected, Toast
+                        .LENGTH_SHORT).show();
+            }
+        });
+        metaWearBoard.connect();
 
 
         if(menu != null) {
@@ -205,9 +205,7 @@ public class MainActivity extends ActionBarActivity implements ScannerCallback, 
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
-            // Only show items in the action bar relevant to this screen
-            // if the drawer is not showing. Otherwise, let the drawer
-            // decide what to show in the action bar.
+
             getMenuInflater().inflate(R.menu.main, menu);
             this.menu = menu;
             String bleMacAddress = sharedPreferences.getString("ble_mac_address", null);
@@ -220,22 +218,23 @@ public class MainActivity extends ActionBarActivity implements ScannerCallback, 
 
     @Override
     public void btDeviceSelected(BluetoothDevice device) {
+        Log.i("Connected", "Connected");
         bluetoothDevice = device;
         btDeviceSelected = true;
         connectDevice(device);
+
     }
 
     public void pairDevice(){
         editor.putString("ble_mac_address", bluetoothDevice.getAddress());
         editor.commit();
-        accelerometerFragment.addTriggers(mwController, editor);
+        //accelerometerFragment.addTriggers(metaWearBoard, editor);
         Log.i("pairDevice", "PairDevice");
     }
 
     public void dontPairDevice(){
-        mwController.waitToClose(true);
         bluetoothDevice = null;
-        mwController.close(true);
+        metaWearBoard.disconnect();
         mwScannerFragment.show(getFragmentManager(), "metawear_scanner_fragment");
     }
 
@@ -243,30 +242,25 @@ public class MainActivity extends ActionBarActivity implements ScannerCallback, 
     public void onDestroy() {
         super.onDestroy();
 
-        if (mwService != null) {
-            mwService.unregisterReceiver(MetaWearBleService.getMetaWearBroadcastReceiver());
-        }
         getApplicationContext().unbindService(this);
     }
 
     @Override
     public void onServiceConnected(ComponentName name, IBinder service) {
-        ///< Get a reference to the MetaWear service from the binder
-        mwService= ((MetaWearBleService.LocalBinder) service).getService();
-        mwService.registerReceiver(MetaWearBleService.getMetaWearBroadcastReceiver(),
-                MetaWearBleService.getMetaWearIntentFilter());
+        serviceBinder = (MetaWearBleService.LocalBinder) service;
+        serviceBinder.executeOnUiThread();
+
         String bleMacAddress = sharedPreferences.getString("ble_mac_address", null);
-        //Log.i("Service Connected", "Stored mac address is " + bleMacAddress);
         if(bleMacAddress != null){
             bluetoothDevice = btAdapter.getRemoteDevice(bleMacAddress);
             connectDevice(bluetoothDevice);
         }
     }
-
-    @Override
-    public GraphFragment getGraphFragment(){
-        return mGraphFragment;
-    }
+//
+//    @Override
+//    public GraphFragment getGraphFragment(){
+//        return mGraphFragment;
+//    }
 
     @Override
     public void setGraphFragment(GraphFragment graphFragment){
@@ -276,59 +270,29 @@ public class MainActivity extends ActionBarActivity implements ScannerCallback, 
     @Override
     public void updateCaloriesAndSteps(int calories, int steps){
         TextView activeCaloriesBurned = (TextView) findViewById(R.id.active_calories_burned);
-        activeCaloriesBurned.setText(getString(R.string.active_calories_burned) + String.valueOf(calories));
+        activeCaloriesBurned.setText(getString(R.string.active_calories_burned) + String.valueOf
+                (calories));
+        Log.i(String.valueOf(calories), String.valueOf(calories) + "TTT");
     }
 
-    @Override
-    public void startDownload(){
-        TextView connectionStatus = (TextView) findViewById(R.id.connection_status);
-        connectionStatus.setText(getText(R.string.metawear_syncing));
-    }
-
-    @Override
-    public void totalDownloadEntries(int entries){
-        ProgressBar progressBar = (ProgressBar) findViewById(R.id.download_progress);
-        progressBar.setMax(entries);
-    }
-
-    @Override
-    public void downloadProgress(int entriesDownloaded){
-        ProgressBar progressBar = (ProgressBar) findViewById(R.id.download_progress);
-        progressBar.setProgress(entriesDownloaded);
-    }
-
-    @Override
-    public void downloadFinished(){
-        TextView connectionStatus = (TextView) findViewById(R.id.connection_status);
-        connectionStatus.setText(getText(R.string.metawear_connected));
-        ProgressBar progressBar = (ProgressBar) findViewById(R.id.download_progress);
-        progressBar.setProgress(0);
-    }
-    ///< Don't need this callback method but we must implement it
     @Override
     public void onServiceDisconnected(ComponentName name) { }
-
+//////////////////////////////////
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        // Handle action bar item clicks here. The action bar will
-        // automatically handle clicks on the Home/Up button, so long
-        // as you specify a parent activity in AndroidManifest.xml.
         int id = item.getItemId();
 
-        //noinspection SimplifiableIfStatement
         switch (id) {
             case R.id.action_connect:
-                if((mwController != null) && mwController.isConnected()){
-                    accelerometerFragment.stopLog(mwController);
-                    accelerometerFragment.removeTriggers(editor);
-                    mwController.waitToClose(false);
+                if((metaWearBoard != null) && metaWearBoard.isConnected()){
+
                     MenuItem connectMenuItem = menu.findItem(R.id.action_connect);
                     connectMenuItem.setTitle(R.string.connect);
                     editor.remove("ble_mac_address");
                     editor.commit();
                     TextView connectionStatus = (TextView) findViewById(R.id.connection_status);
                     connectionStatus.setText(getText(R.string.metawear_connected));
-                    mwController.close(false);
+                    metaWearBoard.disconnect();
                 }else {
                     if(mwScannerFragment == null) {
                         mwScannerFragment = new MWScannerFragment();
@@ -339,35 +303,17 @@ public class MainActivity extends ActionBarActivity implements ScannerCallback, 
                 }
                 break;
             case R.id.action_reset_device:
-                Debug debugController= (Debug) mwController.getModuleController(Module.DEBUG);
-                accelerometerFragment.stopLog(mwController);
-                accelerometerFragment.removeTriggers(editor);
-                debugController.resetDevice();
-                //mwController.waitToClose(false);
+
                 MenuItem connectMenuItem = menu.findItem(R.id.action_connect);
                 connectMenuItem.setTitle(R.string.connect);
-                accelerometerFragment.removePersistedTriggers(editor);
                 editor.remove("ble_mac_address");
                 editor.commit();
-                //mwController.close(false);
-                break;
-            case R.id.action_clear_log:
-                activitySampleDb.execSQL("delete from " + ActivitySampleContract.ActivitySampleEntry.TABLE_NAME);
-                break;
-            case R.id.action_refresh:
-                if(!mwController.isConnected()) {
-                    mwController.connect();
-                }
-                if(accelerometerFragment == null){
-
-                    accelerometerFragment.restoreState(sharedPreferences);
-                }
-                accelerometerFragment.startLogDownload(mwController, activitySampleDb);
-                break;
         }
 
         return super.onOptionsItemSelected(item);
     }
+
+    ///////
 
     private void setupDatabase(){
         ActivitySampleDbHelper activitySampleDbHelper = new ActivitySampleDbHelper(this);
@@ -388,6 +334,7 @@ public class MainActivity extends ActionBarActivity implements ScannerCallback, 
         @Override
         public void onServiceDisconnected(ComponentName name) {
             //mwService= null;
+
         }
 
         @Override
@@ -427,7 +374,6 @@ public class MainActivity extends ActionBarActivity implements ScannerCallback, 
                 DateFormat outputDateFormat = new SimpleDateFormat("MMM dd, yyyy   HH:mm");
                 formattedDate = outputDateFormat.format(date);
             } catch (ParseException pe){
-                //Log.i("MainActivity", "Date Parse Exception OnValueSelected " + pe.toString());
                 formattedDate = "";
             }
 

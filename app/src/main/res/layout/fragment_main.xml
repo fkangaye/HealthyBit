@@ -81,6 +81,17 @@
                 android:text="@string/demo"
                 android:textColor="#ffffffff"
                 android:textStyle="italic" />
+
+            <Switch
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentEnd="true"
+                android:text="Start"
+                android:id="@+id/accel_switch"
+                android:layout_below="@+id/demo"
+                android:layout_centerHorizontal="true"
+                android:layout_marginTop="56dp" />
+
             <ProgressBar
                 style="?android:attr/progressBarStyleHorizontal"
                 android:layout_width="match_parent"
